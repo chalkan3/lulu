@@ -71,7 +71,7 @@ func (m model) View() string {
 
 	for i := 0; i < len(choices); i++ {
 		if m.cursor == i {
-			s.WriteString("(🤏) ")
+			s.WriteString("(🐙)")
 		} else {
 			s.WriteString("( ) ")
 		}
@@ -119,7 +119,7 @@ func main() {
 		for _, v := range m.actions {
 			if v.Name == m.choice {
 				homePath := os.ExpandEnv("$HOME")
-				stdout, err := exec.Command("rm", homePath+"/.kube/config").Output()
+				stdout, err := exec.Command("rm", "-rf", homePath+"/.kube/config").Output()
 				fmt.Println(string(stdout))
 
 				if err != nil {
@@ -127,7 +127,7 @@ func main() {
 					return
 				}
 
-				cmd := exec.Command("mv", homePath+"/.kube/"+v.ConfigFileName, homePath+"/.kube/config")
+				cmd := exec.Command("cp", homePath+"/.kube/"+v.ConfigFileName, homePath+"/.kube/config")
 				stdout, err = cmd.Output()
 
 				if err != nil {
@@ -135,6 +135,16 @@ func main() {
 					return
 				}
 
+				cm2 := exec.Command("kubectl", "config", "get-clusters")
+				stdout, err = cm2.Output()
+
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+
+				fmt.Println("Cluster Ativo", v.Name)
+				fmt.Println("Executing kubectl config get-clusters\n\n")
 				fmt.Println(string(stdout))
 			}
 		}

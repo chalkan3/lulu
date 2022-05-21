@@ -1,5 +1,5 @@
 kube-config:
-  - name: hv4-develop-hm
-    config-file-name: config_dev 
-  - name: hv4-prod
-    config-file-name: config_prod
+  - name: Cluster Produção HV4
+    config-file-name: hv4_prod 
+  - name: Cluster DEV/HML HV4
+    config-file-name: hv4_dev
