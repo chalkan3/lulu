@@ -1,0 +1,5 @@
+kube-config:
+  - name: hv4-develop-hm
+    config-file-name: config 
+  - name: hv4-prod
+    config-file-name: config_prod
