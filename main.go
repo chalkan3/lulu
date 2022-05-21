@@ -67,7 +67,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	s := strings.Builder{}
-	s.WriteString("Bem vindo ao lulu cluster handler! escolha uma config\n\n")
+	s.WriteString("Bem vindo ao lulu cluster handler!  😎 escolha uma config\n\n")
 
 	for i := 0; i < len(choices); i++ {
 		if m.cursor == i {
@@ -118,15 +118,23 @@ func main() {
 	if m, ok := m.(model); ok && m.choice != "" {
 		for _, v := range m.actions {
 			if v.Name == m.choice {
-				cmd := exec.Command("export", "$KUBECONFIG=~/.kube/"+v.ConfigFileName)
-				stdout, err := cmd.Output()
+				homePath := os.ExpandEnv("$HOME")
+				stdout, err := exec.Command("rm", homePath+"/.kube/config").Output()
+				fmt.Println(string(stdout))
 
 				if err != nil {
 					fmt.Println(err.Error())
 					return
 				}
 
-				// Print the output
+				cmd := exec.Command("mv", homePath+"/.kube/"+v.ConfigFileName, homePath+"/.kube/config")
+				stdout, err = cmd.Output()
+
+				if err != nil {
+					fmt.Println(err.Error())
+					return
+				}
+
 				fmt.Println(string(stdout))
 			}
 		}
