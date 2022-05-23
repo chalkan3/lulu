@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -162,11 +163,11 @@ func main() {
 	doc.WriteString(row + "\n\n")
 	fmt.Println(doc.String())
 
-	// usr, _ := user.Current()
-	// dir := usr.HomeDir
+	usr, _ := user.Current()
+	dir := usr.HomeDir
 
-	// yfile, err := ioutil.ReadFile(dir + "/.kube/config.yml")
-	yfile, err := ioutil.ReadFile("config/config.yml")
+	yfile, err := ioutil.ReadFile(dir + "/.kube/config.yml")
+	// yfile, err := ioutil.ReadFile("config/config.yml")
 
 	if err != nil {
 
