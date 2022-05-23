@@ -1,5 +1,21 @@
 kube-config:
-  - name: Cluster Produção HV4
-    config-file-name: hv4_prod 
-  - name: Cluster DEV/HML HV4
+  - name: Cluster Produção 
+    config-file-name: hv4_prod
+    tab-id: 1 
+  - name: Cluster DEV/HML 
     config-file-name: hv4_dev
+    tab-id: 1
+  - name: t
+    config-file-name: hv4_prod
+    tab-id: 2 
+  - name: test
+    config-file-name: hv4_dev
+    tab-id: 2
+
+tabs:
+  - name: HV4
+    id: 1
+  - name: HV2
+    id: 2
+  - name: HV3
+    id: 3

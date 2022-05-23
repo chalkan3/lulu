@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/user"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,19 +16,28 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var choices = []string{}
+var choices = []*Config{}
+var tabss = []*Tabs{}
 
 type Config struct {
 	Name           string `yaml:"name,omitempty"`
 	ConfigFileName string `yaml:"config-file-name,omitempty"`
+	TabID          int    `yaml:"tab-id,omitempty"`
 }
 
 type Configs struct {
 	Configs []*Config `yaml:"kube-config,omitempty"`
+	Tabs    []*Tabs   `yaml:"tabs,omitempty"`
+}
+
+type Tabs struct {
+	ID   int    `yaml:"id"`
+	Name string `yaml:"name"`
 }
 type model struct {
 	cursor  int
 	choice  string
+	active  int
 	actions []*Config
 }
 
@@ -38,6 +46,7 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -46,7 +55,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			// Send the choice on the channel and exit.
-			m.choice = choices[m.cursor]
+			m.choice = choices[m.cursor].Name
 			return m, tea.Quit
 
 		case "down", "j":
@@ -60,6 +69,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor < 0 {
 				m.cursor = len(choices) - 1
 			}
+		case "tab":
+			if m.active > len(tabss)-1 {
+				m.active = 1
+			} else {
+				m.active++
+
+			}
+
 		}
 
 	}
@@ -70,16 +87,41 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	s := strings.Builder{}
 
+	{
+		tt := []string{}
+		for _, v := range tabss {
+			if v.ID == m.active {
+				tt = append(tt, activeTab.Render(v.Name))
+			} else {
+				tt = append(tt, tab.Render(v.Name))
+			}
+		}
+
+		row := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			tt...,
+		)
+
+		gap := tabGap.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(row)-1)))
+		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
+
+		s.WriteString(row + "\n\n")
+
+	}
+
 	targetCluster := "None"
 	for i := 0; i < len(choices); i++ {
-		if m.cursor == i {
-			targetCluster = choices[i]
-			s.WriteString("(🐙)")
-		} else {
-			s.WriteString("( ) ")
+		if choices[i].TabID == m.active {
+			if m.cursor == i {
+				targetCluster = choices[i].Name
+				s.WriteString("(🐙)")
+			} else {
+				s.WriteString("( ) ")
+			}
+			s.WriteString(choices[i].Name)
+			s.WriteString("\n")
 		}
-		s.WriteString(choices[i])
-		s.WriteString("\n")
+
 	}
 
 	{
@@ -109,15 +151,7 @@ func main() {
 
 	doc := strings.Builder{}
 	// var style = lipgloss.NewStyle().Foreground(lipgloss.Color("219"))
-	{
-		row := lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			activeTab.Render("Configs"),
-		)
-		gap := tabGap.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(row)-2)))
-		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
-		doc.WriteString(row + "\n\n")
-	}
+
 	// fmt.Println(style.Render("Bem vindo ao lulu cluster handler!  😎 escolha uma config\n\n"))
 	desc := lipgloss.JoinVertical(lipgloss.Left,
 		descStyle.Render("Lulu Multi Kube Config"),
@@ -128,10 +162,11 @@ func main() {
 	doc.WriteString(row + "\n\n")
 	fmt.Println(doc.String())
 
-	usr, _ := user.Current()
-	dir := usr.HomeDir
+	// usr, _ := user.Current()
+	// dir := usr.HomeDir
 
-	yfile, err := ioutil.ReadFile(dir + "/.kube/config.yml")
+	// yfile, err := ioutil.ReadFile(dir + "/.kube/config.yml")
+	yfile, err := ioutil.ReadFile("config/config.yml")
 
 	if err != nil {
 
@@ -146,12 +181,12 @@ func main() {
 		log.Fatal(err2)
 	}
 
-	for _, v := range configs.Configs {
-		choices = append(choices, v.Name)
-	}
+	tabss = configs.Tabs
+	choices = configs.Configs
 
 	mm := model{}
 	mm.actions = configs.Configs
+	mm.active = 1
 	p := tea.NewProgram(mm)
 
 	// StartReturningModel returns the model as a tea.Model.
